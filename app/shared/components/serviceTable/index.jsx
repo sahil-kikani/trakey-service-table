@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Search, ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { renderTableRows } from './tableRows'
 import { ServiceDetailsModal } from './infoModal'
@@ -15,8 +15,10 @@ const ServiceTable = () => {
   const [totalServices, setTotalServices] = useState(0)
   const [selectedService, setSelectedService] = useState(null)
 
+  const allData = useRef([])
+
   // Fetch services from API
-  const fetchServices = async (url = 'http://20.193.149.47:2242/salons/service/') => {
+  const fetchServices = async (url = `${baseUrl}?page=${currentPage}`) => {
     try {
       setLoading(true)
       const response = await fetch(url)
@@ -27,7 +29,8 @@ const ServiceTable = () => {
 
       const data = await response.json()
       const { results, next, previous, count } = data
-
+      allData.current = results
+      
       setServices(results)
       setNextPageUrl(next)
       setPrevPageUrl(previous)
@@ -49,18 +52,24 @@ const ServiceTable = () => {
     if (nextPageUrl) fetchServices(nextPageUrl)
   }
 
-  console.log('services', services)
-
   const handlePrevPage = () => {
     if (prevPageUrl) fetchServices(prevPageUrl)
   }
 
-  // Search handler
-  const filteredServices = services.filter((service) => service.service_name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   // Open service details modal
   const openServiceDetails = (service) => {
     setSelectedService(service)
+  }
+
+  function handleSearch(value) {
+    const filteredServices = allData.current.filter((service) => service?.service_name.toLowerCase().includes(value.toLowerCase()))
+    setSearchTerm(value)
+    if (value === '') {
+      setServices(allData.current)
+    } else {
+      setServices(filteredServices)
+    }
   }
 
   // Columns
@@ -81,7 +90,7 @@ const ServiceTable = () => {
               type='text'
               placeholder='Search services...'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className='w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             />
             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' size={20} />
@@ -107,7 +116,7 @@ const ServiceTable = () => {
         {/* Pagination Section */}
         <div className='flex flex-col md:flex-row items-center justify-between p-4 bg-gray-50'>
           <div className='text-sm text-gray-500 mb-4 md:mb-0'>
-            Showing {filteredServices?.length} of {totalServices} services
+            Showing {services?.length} of {totalServices} services
           </div>
           <div className='flex space-x-2'>
             <button
