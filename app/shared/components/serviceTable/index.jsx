@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Search, ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { renderTableRows } from './tableRows'
 import { ServiceDetailsModal } from './infoModal'
+import { baseUrl } from '../../constants'
 
 const ServiceTable = () => {
   // State management
